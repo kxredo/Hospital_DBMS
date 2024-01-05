@@ -8,6 +8,7 @@ import java.util.Map;
 public class View extends JFrame {
     private Map<String, String> userDatabase;  // Simulated user database (username, password)
     private Map<String, String> appointmentData;
+    private Map<String, String> billData = new HashMap<>();  // New map for storing bill information
     private JTextField usernameField;
     private JPasswordField passwordField;
     private String selectedRole;
@@ -180,7 +181,7 @@ public class View extends JFrame {
         });
     }
 
-    private void showPatientInterface(String username) {
+    private void patientInterface(String username) {
         JFrame patientFrame = new JFrame("Patient Interface");
         patientFrame.setSize(400, 300);
         patientFrame.setLocationRelativeTo(null);
@@ -217,8 +218,7 @@ public class View extends JFrame {
         viewBillsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Add logic to handle "View Bills" button click
-                JOptionPane.showMessageDialog(patientFrame, "View Bills functionality to be implemented.");
+                viewBillsFunction();
             }
         });
     
@@ -226,7 +226,7 @@ public class View extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Add logic to handle "Sign Out" button click
-                JOptionPane.showMessageDialog(patientFrame, "Signing out...");
+                JOptionPane.showMessageDialog(patientFrame, "Signed Out");
                 patientFrame.dispose();  // Close the patient frame
             }
         });
@@ -275,12 +275,15 @@ public class View extends JFrame {
                 String concerns = concernsField.getText();
                 String symptoms = symptomsField.getText();
 
-                // Add logic to save the appointment details to the database or perform necessary actions
-                JOptionPane.showMessageDialog(appointmentFrame, "Appointment scheduled:\nDate/Time: " + date + "\nConcerns: " + concerns + "\nSymptoms: " + symptoms, "Success", JOptionPane.INFORMATION_MESSAGE);
-                appointmentFrame.dispose(); // Close the appointment frame
-            }
-        });
-    }
+                String appointmentInfo = date + ";" + "Scheduled" + ";" + timeField.getText() + ";" + concerns + ";" + symptoms;
+            appointmentData.put(date, appointmentInfo);
+
+            // Show a success message
+            JOptionPane.showMessageDialog(appointmentFrame, "Appointment scheduled:\nDate/Time: " + date + "\nConcerns: " + concerns + "\nSymptoms: " + symptoms, "Success", JOptionPane.INFORMATION_MESSAGE);
+            appointmentFrame.dispose(); // Close the appointment frame
+        }
+    });
+}
 
     private void viewAppointmentsFunction() {
         // Create a frame for viewing appointments
@@ -330,7 +333,9 @@ public class View extends JFrame {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     // Implement logic for "Cancel/Delete" button
-                    JOptionPane.showMessageDialog(appointmentsFrame, "Cancel/Delete functionality to be implemented.");
+                    String selectedDate = appointmentDetails[0];
+                    appointmentData.remove(selectedDate);
+                    viewAppointmentsFunction(); // Refresh the view after cancellation
                 }
             });
         }
@@ -340,9 +345,38 @@ public class View extends JFrame {
         appointmentsFrame.setVisible(true);
     }
 
+    private void viewBillsFunction() {
+        // Create a frame for viewing bills
+        JFrame billsFrame = new JFrame("View Bills");
+        billsFrame.setSize(600, 400);
+        billsFrame.setLocationRelativeTo(null);
+
+        // Create a panel for displaying bill information
+        JPanel panel = new JPanel(new GridLayout(billData.size() + 1, 3, 10, 10));
+
+        // Add headers for bill details
+        panel.add(new JLabel("Date"));
+        panel.add(new JLabel("Description"));
+        panel.add(new JLabel("Amount"));
+
+        // Iterate over bill data and display information
+        for (Map.Entry<String, String> entry : billData.entrySet()) {
+            String billInfo = entry.getValue();
+            String[] billDetails = billInfo.split(";");
+
+            for (String detail : billDetails) {
+                panel.add(new JLabel(detail));
+            }
+        }
+
+        // Add the panel to the frame
+        billsFrame.add(new JScrollPane(panel));
+        billsFrame.setVisible(true);
+    }
+
     private void showUserInterface(String userType) {
         if (selectedRole.equals("Patient")) {
-            showPatientInterface(userType);
+            patientInterface(userType);
         } 
         else {
             // Implement interfaces for other user types if needed
