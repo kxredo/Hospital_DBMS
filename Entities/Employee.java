@@ -11,8 +11,9 @@ public class Employee {
     public final int salary; 
     public final String first_name;
     public final String last_name;
+    public final String role;
 
-    public Employee(int emp_Id, int phone, String email, String address, String username, String password, int salary, String first_name, String last_name) {
+    public Employee(int emp_Id, int phone, String email, String address, String username, String password, int salary, String first_name, String last_name, String role) {
         this.emp_Id = emp_Id;
         this.phone = phone;
         this.email = email;
@@ -22,6 +23,7 @@ public class Employee {
         this.salary = salary;
         this.first_name = first_name;
         this.last_name = last_name;
+        this.role = role;
     }
 
     // Getter methods for the properties
@@ -59,5 +61,8 @@ public class Employee {
 
     public String getLast_name() {
         return last_name;
+    }
+    public String getRole() {
+        return role;
     }
 }

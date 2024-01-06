@@ -3,8 +3,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection{
-    final static String url = "jdbc:mysql://localhost:3306/mydb";
-    final static String user = "username";
+    final static String url = "jdbc:mysql://localhost:3306/Hospital";
+    final static String user = "root";
     final static String password = "password";
     
     public static Connection getConnection() {

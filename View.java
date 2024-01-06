@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -68,22 +69,97 @@ public class View extends JFrame {
             }
         });
     }
+    private String getUserRole(String username) {
+        try {
+            // Establish database connection
+            Connection connection = DBConnection.getConnection();
+    
+            if (connection != null) {
+                // Execute a query to retrieve the user role based on the username
+                String query = "SELECT role FROM Employees WHERE username = ?";
+    
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, username);
+    
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        // If a row is returned, retrieve the role
+                        if (resultSet.next()) {
+                            return resultSet.getString("role");
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    
+        return null;
+    }
+    
 
     private void login() {
         String username = usernameField.getText();
         char[] passwordChars = passwordField.getPassword();
         String password = new String(passwordChars);
-
+    
+        // Check if the user is a patient
         if (userDatabase.containsKey(username) && userDatabase.get(username).equals(password)) {
-            showUserInterface(username);
+            selectedRole = "Patient";
+            showUserInterface("Patient");
         } else {
-            JOptionPane.showMessageDialog(this, "Invalid username or password", "Error", JOptionPane.ERROR_MESSAGE);
+            // If not a patient, try to verify login for doctors/nurses
+            if (verifyLogin(username, password)) {
+                // Retrieve the user role
+                String userRole = getUserRole(username);
+    
+                if (userRole != null) {
+                    selectedRole = userRole;
+                    showUserInterface(userRole);
+                } else {
+                    JOptionPane.showMessageDialog(this, "User role not found", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid username or password", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
-
+    
         // Clear fields after login attempt
         usernameField.setText("");
         passwordField.setText("");
     }
+    
+    
+    private boolean verifyLogin(String username, String password) {
+        try {
+            // Check if the user exists in the userDatabase map
+            if (userDatabase.containsKey(username) && userDatabase.get(username).equals(password)) {
+                return true;
+            }
+    
+            // Establish database connection
+            Connection connection = DBConnection.getConnection();
+    
+            if (connection != null) {
+                // Execute a query to check if the username and password match
+                String query = "SELECT * FROM Employees WHERE username = ? AND password = ?";
+    
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, username);
+                    preparedStatement.setString(2, password);
+    
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        // If a row is returned, the login is successful
+                        return resultSet.next();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    
+        return false;
+    }
+    
 
     private void register() {
         String username;
@@ -129,7 +205,7 @@ public class View extends JFrame {
         registrationFrame.setSize(400, 400);
         registrationFrame.setLocationRelativeTo(null);
     
-        JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(11, 1, 10, 10));
     
         JLabel firstNameLabel = new JLabel("First Name:");
         JTextField firstNameField = new JTextField();
@@ -137,12 +213,22 @@ public class View extends JFrame {
         JLabel lastNameLabel = new JLabel("Last Name:");
         JTextField lastNameField = new JTextField();
     
-        JLabel roleLabel = new JLabel("Role:");
-        JComboBox<String> roleComboBox = new JComboBox<>(new String[]{"Doctor", "Nurse", "Patient"});
-    
         JLabel genderLabel = new JLabel("Gender:");
         JComboBox<String> genderComboBox = new JComboBox<>(new String[]{"Male", "Female"});
-    
+
+        JLabel dayLabel = new JLabel("Day of birth:");
+        JComboBox<String> dayComboBox = new JComboBox<>(new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"});
+
+        JLabel monthLabel = new JLabel("Month of birth:");
+        JComboBox<String> monthComboBox = new JComboBox<>(new String[]{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"});
+
+        
+        JLabel yearLabel = new JLabel("Year of birth:");
+        JComboBox<String> yearComboBox = new JComboBox<>();
+        for (int year = 1900; year <= 2024; year++) {
+            yearComboBox.addItem(String.valueOf(year));
+}
+
         JLabel phoneNumberLabel = new JLabel("Phone Number:");
         JTextField phoneNumberField = new JTextField();
     
@@ -158,8 +244,12 @@ public class View extends JFrame {
         panel.add(firstNameField);
         panel.add(lastNameLabel);
         panel.add(lastNameField);
-        panel.add(roleLabel);
-        panel.add(roleComboBox);
+        panel.add(dayLabel);
+        panel.add(dayComboBox);
+        panel.add(monthLabel);
+        panel.add(monthComboBox);
+        panel.add(yearLabel);
+        panel.add(yearComboBox);
         panel.add(genderLabel);
         panel.add(genderComboBox);
         panel.add(phoneNumberLabel);
@@ -177,14 +267,84 @@ public class View extends JFrame {
         submitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Retrieve selected role from the combo box
-                selectedRole = (String) roleComboBox.getSelectedItem();
-    
+                
+                // Retrieve values from text fields and combo boxes
+                String firstName = firstNameField.getText();
+                String lastName = lastNameField.getText();
+                String dayOfBirth = (String) dayComboBox.getSelectedItem();
+                String monthOfBirth = (String) monthComboBox.getSelectedItem();
+                String yearOfBirth = (String) yearComboBox.getSelectedItem();
+                String gender = (String) genderComboBox.getSelectedItem();
+                String phoneNumber = phoneNumberField.getText();
+                String email = emailField.getText();
+                String address = addressField.getText();
+        
+                // Check if any of the fields are empty
+                if (firstName.isEmpty()) {
+                    showError("First name is empty.");
+                    return;
+                }
+        
+                if (lastName.isEmpty()) {
+                    showError("Last name is empty.");
+                    return;
+                }
+        
+                if (dayOfBirth.isEmpty() || monthOfBirth.isEmpty() || yearOfBirth.isEmpty()) {
+                    showError("Date of birth is incomplete.");
+                    return;
+                }
+        
+                if (gender.isEmpty()) {
+                    showError("Gender is not selected.");
+                    return;
+                }
+        
+                if (phoneNumber.isEmpty()) {
+                    showError("Phone number is empty.");
+                    return;
+                }
+        
+                // Check if phone number contains only numbers
+                if (!phoneNumber.matches("\\d+")) {
+                    showError("Phone number should contain numbers only.");
+                    return;
+                }
+        
+                if (email.isEmpty()) {
+                    showError("Email is empty.");
+                    return;
+                }
+        
+                if (address.isEmpty()) {
+                    showError("Address is empty.");
+                    return;
+                }
+        
                 // Save the user details to the database or perform necessary actions
-                JOptionPane.showMessageDialog(registrationFrame, "Registration successful\nRole: " + selectedRole, "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(registrationFrame, "Registration successful ", " ", JOptionPane.INFORMATION_MESSAGE);
                 registrationFrame.dispose();  // Close the registration frame
             }
+        
+            private void showError(String message) {
+                JOptionPane.showMessageDialog(registrationFrame, message, "Incomplete Information", JOptionPane.ERROR_MESSAGE);
+            }
         });
+        
+    }
+    private void showUserInterface(String userType) {
+        if (selectedRole.equals("Patient")) {
+            patientInterface(userType);
+        }
+        else if (selectedRole.equals("Doctor")) {
+            doctorInterface(userType);
+        }
+        else if(selectedRole.equals("Nurse")) {
+            nurseInterface(userType);
+        }
+        else {
+            //JOptionPane.showMessageDialog(this, "Error." ,"Login Unsuccessful.", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void patientInterface(String username) {
@@ -356,29 +516,44 @@ public class View extends JFrame {
         JFrame billsFrame = new JFrame("View Bills");
         billsFrame.setSize(600, 400);
         billsFrame.setLocationRelativeTo(null);
-
+    
         // Create a panel for displaying bill information
-        JPanel panel = new JPanel(new GridLayout(billData.size() + 1, 3, 10, 10));
-
+        JPanel panel = new JPanel(new GridLayout(billData.size() + 1, 5, 10, 10));
+    
         // Add headers for bill details
         panel.add(new JLabel("Date"));
         panel.add(new JLabel("Description"));
         panel.add(new JLabel("Amount"));
-
+        panel.add(new JLabel("Status"));
+        panel.add(new JLabel("Bill Number"));
+    
         // Iterate over bill data and display information
         for (Map.Entry<String, String> entry : billData.entrySet()) {
             String billInfo = entry.getValue();
             String[] billDetails = billInfo.split(";");
-
+    
             for (String detail : billDetails) {
                 panel.add(new JLabel(detail));
             }
+    
+            // Add status and bill number
+            panel.add(new JLabel(getBillStatus(entry.getKey()))); // Assuming entry.getKey() returns the bill ID
+            panel.add(new JLabel(entry.getKey())); // Assuming entry.getKey() returns the bill ID
         }
-
+    
         // Add the panel to the frame
         billsFrame.add(new JScrollPane(panel));
         billsFrame.setVisible(true);
     }
+    
+    // Example method to get bill status based on bill ID
+    private String getBillStatus(String billID) {
+        // Implement your logic to get the status based on the bill ID
+        // You might fetch this information from the database or any other source
+        // For demonstration purposes, I'm assuming a simple logic here
+        return "Paid"; // Replace with your logic
+    }
+    
 
     private void doctorInterface(String username) {
         JFrame doctorFrame = new JFrame("Doctor Interface");
@@ -477,8 +652,11 @@ public class View extends JFrame {
         JLabel dateLabel = new JLabel("Date: (dd/mm/yy)");
         JTextField dateField = new JTextField();
 
-        JLabel timeLabel = new JLabel("Time: (hr:min)");
-        JTextField timeField = new JTextField();
+        JLabel startTimeLabel = new JLabel("Start time: (hr:min)");
+        JTextField startTimeField = new JTextField();
+
+        JLabel endTimeLabel = new JLabel("End time: (hr:min)");
+        JTextField endTimeField = new JTextField();
 
         JLabel patientLabel = new JLabel("Patient:");
         JTextField patientField = new JTextField();
@@ -490,8 +668,10 @@ public class View extends JFrame {
 
         panel.add(dateLabel);
         panel.add(dateField);
-        panel.add(timeLabel);
-        panel.add(timeField);
+        panel.add(startTimeLabel);
+        panel.add(startTimeField);
+        panel.add(endTimeLabel);
+        panel.add(endTimeField);
         panel.add(patientLabel);
         panel.add(patientField);
         panel.add(symptomsLabel);
@@ -507,12 +687,13 @@ public class View extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 // Retrieve user inputs
                 String date = dateField.getText();
-                String time = timeField.getText();
+                String startTime = startTimeField.getText();
+                String endTime = endTimeField.getText();
                 String patient = patientField.getText();
                 String symptoms = symptomsField.getText();
 
                 // Add logic to save the appointment details to the database or perform necessary actions
-                JOptionPane.showMessageDialog(appointmentFrame, "Appointment scheduled:\nDate/Time: " + date + " " + time + "\nPatient: " + patient + "\nSymptoms: " + symptoms, "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(appointmentFrame, "Appointment scheduled:\nDate/Time: " + date + " " + startTime + " -> " + endTime + "\nPatient: " + patient + "\nSymptoms: " + symptoms, "Success", JOptionPane.INFORMATION_MESSAGE);
                 appointmentFrame.dispose(); // Close the appointment frame
             }
         });
@@ -845,22 +1026,6 @@ private void managePatientFunction() {
     
 
     
-
-    private void showUserInterface(String userType) {
-        if (selectedRole.equals("Patient")) {
-            patientInterface(userType);
-        }
-        if (selectedRole.equals("Doctor")) {
-            doctorInterface(userType);
-        }
-        if(selectedRole.equals("Nurse")) {
-            nurseInterface(userType);
-        }
-        else {
-            // Implement interfaces for other user types if needed
-            JOptionPane.showMessageDialog(this, "Welcome, " + userType + "!", "Login Successful", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
