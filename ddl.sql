@@ -27,8 +27,6 @@ CREATE TABLE Patient (
     email varchar(100) NOT NULL
 );
 
-
-
 CREATE TABLE Doctor (
     emp_id INT AUTO_INCREMENT PRIMARY KEY,
     username varchar(50) NOT NULL,
@@ -81,7 +79,7 @@ CREATE TABLE HealthInsurance(
 */
 
 CREATE TABLE Bill(
-        bill_no int PRIMARY KEY,
+    bill_no int PRIMARY KEY,
     fees int NOT NULL,
     status int NOT NULL,
     amount int NOT NULL
@@ -98,7 +96,7 @@ CREATE TABLE Appointment (
 CREATE TABLE Room (
     roomNo int PRIMARY KEY,
     roomType varchar(50) NOT NULL,
-    availability boolean NOT NULL
+    availability boolean DEFAULT true
 );
 
 CREATE TABLE MedicalHistory (
@@ -108,3 +106,34 @@ CREATE TABLE MedicalHistory (
     surgeries VARCHAR(100) NOT NULL,
     medication VARCHAR(100) NOT NULL
 );
+
+CREATE TABLE LocatedIn (
+    appointment_id INT,
+    roomNo INT,
+    FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
+    FOREIGN KEY (roomNo) REFERENCES Room(roomNo)
+);
+
+CREATE TABLE Schedules (
+    doctor_id INT,
+    appointment_date INT;
+    room_id INT,
+    FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
+    FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
+    FOREIGN KEY (roomNo) REFERENCES Room(roomNo)
+);
+
+CREATE TABLE AttendedBy {
+    nurse_id INT,
+    doctor_id INT,
+    patient_id INT,
+    appointment_id INT,
+
+    FOREIGN KEY (nurse_id) REFERENCES Nurse(emp_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
+    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id),
+    FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
+ 
+};
+
+
