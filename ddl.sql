@@ -107,33 +107,45 @@ CREATE TABLE MedicalHistory (
     medication VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE LocatedIn (
-    appointment_id INT,
-    roomNo INT,
-    FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
-    FOREIGN KEY (roomNo) REFERENCES Room(roomNo)
-);
+-- CREATE TABLE LocatedIn (
+--     appointment_id INT,
+--     roomNo INT,
+--     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
+--     FOREIGN KEY (roomNo) REFERENCES Room(roomNo)
+-- );
 
 CREATE TABLE Schedules (
     doctor_id INT,
-    appointment_date INT;
+    appointment_date DATETIME,  -- Assuming the date and time are stored in a DATETIME column
     room_id INT,
+    patient_id INT,
+    appointment_id INT PRIMARY KEY,  -- Assuming appointment_id is the primary key for the Appointment table
     FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
-    FOREIGN KEY (roomNo) REFERENCES Room(roomNo)
+    FOREIGN KEY (room_id) REFERENCES Room(roomNo),  -- Corrected the reference to roomNo
+    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
 );
 
-CREATE TABLE AttendedBy {
-    nurse_id INT,
-    doctor_id INT,
-    patient_id INT,
-    appointment_id INT,
 
-    FOREIGN KEY (nurse_id) REFERENCES Nurse(emp_id),
-    FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
-    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id),
-    FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
+-- CREATE TABLE AttendedBy {
+--     nurse_id INT,
+--     doctor_id INT,
+--     patient_id INT,
+--     appointment_id INT,
+
+--     FOREIGN KEY (nurse_id) REFERENCES Nurse(emp_id),
+--     FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
+--     FOREIGN KEY (patient_id) REFERENCES Patient(patient_id),
+--     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id)
  
-};
+-- };
 
+CREATE TABLE Pays{
+    receipt_id INT AUTO_INCREMENT, 
+    bill_no INT, 
+    patient_id INT,
+    PRIMARY KEY (receipt_id) 
+    FOREIGN KEY (bill_no) REFERENCES Bill(bill_no),
+    FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
+}
 
