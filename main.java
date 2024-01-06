@@ -7,11 +7,58 @@ import java.sql.ResultSet;
 import java.sql.SQLException; 
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale.Category;
+
+import Entities.Room;
 
 
 
 public class main{
+    public int addAdmin(String username, String password) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet generatedKeys = null;
+
+        try {
+            connection = DBConnection.getConnection();
+            String insertQuery = "INSERT INTO admin(username, password) VALUES (?, ?)";
+
+            preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+
+            int rowsInserted = preparedStatement.executeUpdate();
+            if (rowsInserted > 0) {
+                System.out.println("A new admin was inserted.");
+
+                generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    int adminId = generatedKeys.getInt(1);
+                    System.out.println("Generated admin ID: " + adminId);
+                    return adminId;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (generatedKeys != null) {
+                    generatedKeys.close();
+                }
+                if (preparedStatement != null) {
+                    preparedStatement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return -1; // Indicates failure to add an admin
+    }
 
     public int addDoctor(String firstName, String lastName, String username, String password, String email, String address, int salary, int phone, String specialty) {
         Connection connection = null;
@@ -168,5 +215,46 @@ public class main{
     }
     
 
+    public List<Room> getAvailableRooms() {
+        List<Room> availableRooms = new ArrayList<>();
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = DBConnection.getConnection();
+            String query = "SELECT * FROM room WHERE availability = true";
+            preparedStatement = connection.prepareStatement(query);
+            resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                int roomNo = resultSet.getInt("roomNo");
+                String roomType = resultSet.getString("roomType");
+                boolean availability = resultSet.getBoolean("availability");
+
+                Room room = new Room(roomNo, roomType, availability);
+                availableRooms.add(room);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (preparedStatement != null) {
+                    preparedStatement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return availableRooms;
+    }
 }
 
