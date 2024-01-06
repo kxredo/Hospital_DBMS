@@ -1,55 +1,52 @@
 --New Stuff
-CREATE TABLE users (
+CREATE TABLE User (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(50) NOT NULL,
     role VARCHAR(20) NOT NULL
 );
 
-
--------
-CREATE TABLE Admin (
-    username varchar(50) NOT NULL,
-    password varchar(50) NOT NULL
+CREATE TABLE Employee (
+    emp_id VARCHAR(50) PRIMARY KEY,
+    user_id INT UNIQUE,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    address VARCHAR(60) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    salary DOUBLE(10, 2) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES User(user_id)
 );
 
 CREATE TABLE Patient (
-    patient_id char(4) NOT NULL PRIMARY KEY,
-    username varchar(50) NOT NULL,
-    password varchar(30) NOT NULL,
-    first_name varchar(50) NOT NULL,
-    last_name varchar(50) NOT NULL,
-    nationality varchar(50) NOT NULL,
+    patient_id CHAR(4) NOT NULL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    nationality VARCHAR(50) NOT NULL,
     gender VARCHAR(6) NOT NULL,
-    address varchar(60) NOT NULL,
-    dob varchar(20) NOT NULL,
-    phone varchar(50) NOT NULL,
-    email varchar(100) NOT NULL
+    address VARCHAR(60) NOT NULL,
+    dob VARCHAR(20) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE Doctor (
-    emp_id INT AUTO_INCREMENT PRIMARY KEY,
-    username varchar(50) NOT NULL,
-    password varchar(30) NOT NULL,
-    first_name varchar(50) NOT NULL,
-    last_name varchar(50) NOT NULL,
-    address varchar(60) NOT NULL,
-    phone varchar(50) NOT NULL,
-    email varchar(100) NOT NULL,
-    salary double (10,2) NOT NULL
+    doctor_id VARCHAR(50) PRIMARY KEY,
+    specialty VARCHAR(50) NOT NULL,
+    FOREIGN KEY (doctor_id) REFERENCES Employee(emp_id)
 );
 
 CREATE TABLE Nurse (
-    emp_id INT AUTO_INCREMENT PRIMARY KEY,
-    username varchar(50) NOT NULL,
-    password varchar(30) NOT NULL,
-    first_name varchar(50) NOT NULL,
-    last_name varchar(50) NOT NULL,
-    address varchar(60) NOT NULL,
-    phone varchar(50) NOT NULL,
-    email varchar(100) NOT NULL,
-    salary double (10,2) NOT NULL
+    nurse_id VARCHAR(50) PRIMARY KEY,
+    FOREIGN KEY (nurse_id) REFERENCES Employee(emp_id)
 );
+
+CREATE TABLE Receptionist (
+    recep_id VARCHAR(50) PRIMARY KEY,
+    FOREIGN KEY (recep_id) REFERENCES Employee(emp_id)
+);
+
 
 CREATE TABLE File (
         fileNo int NOT NULL
@@ -91,6 +88,7 @@ CREATE TABLE Appointment (
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
     fee double NOT NULL
+    
 );
 
 CREATE TABLE Room (
@@ -107,6 +105,7 @@ CREATE TABLE MedicalHistory (
     medication VARCHAR(100) NOT NULL
 );
 
+--
 -- CREATE TABLE LocatedIn (
 --     appointment_id INT,
 --     roomNo INT,
@@ -149,3 +148,11 @@ CREATE TABLE Pays{
     FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
 }
 
+CREATE TABLE Unavailability (
+    unavailability_id INT PRIMARY KEY AUTO_INCREMENT,
+    doctor_id VARCHAR(50),
+    day_of_week INT,
+    start_time TIME,
+    end_time TIME,
+    FOREIGN KEY (doctor_id) REFERENCES Doctor(doctor_id)
+);
