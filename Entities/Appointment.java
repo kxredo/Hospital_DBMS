@@ -7,12 +7,14 @@ public class Appointment {
     public final int fee;
     public final Date startTime;
     public final Date endTime;
+    public final int nurseId; 
 
-    public Appointment(int appointmentId, int fee, Date startTime, Date endTime) {
+    public Appointment(int appointmentId, int fee, Date startTime, Date endTime, int nurseId) {
         this.appointmentId = appointmentId;
         this.fee = fee;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.nurseId = nurseId;
     }
 
     // Getter methods for the properties

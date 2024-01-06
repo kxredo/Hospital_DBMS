@@ -122,14 +122,23 @@ LIMIT 1;
 
 ---------------------------New Stuff---------------------------------
 
--- Grant SELECT permission on the appointments view to doctors
-GRANT SELECT ON appointments_view TO doctors;
 
 -- Create a view for available appointments
 CREATE VIEW appointments_view AS
-SELECT appointment_id, appointment_date
-FROM appointments
+SELECT appointment_id, start_time, end_time, fee
+FROM Appointment
 WHERE doctor_id IS NULL;
+
+-- Grant SELECT permission on the appointments_view to doctors
+GRANT SELECT ON appointments_view TO doctors;
+
+-- Create a view for nurse room availability
+CREATE VIEW NurseRoomAvailability AS
+SELECT roomNo, roomType, availability
+FROM Room;
+
+-- Grant SELECT permission on the NurseRoomAvailability view to nurses
+GRANT SELECT ON NurseRoomAvailability TO nurses;
 
 -- Create a stored procedure to get available appointments for a specific doctor
 DELIMITER //
@@ -146,3 +155,25 @@ BEGIN
 END //
 DELIMITER ;
 
+
+-- Not so sure 
+-- Create a stored procedure to assign a room and nurse to an appointment
+DELIMITER //
+CREATE PROCEDURE assign_room_and_nurse(
+    IN p_appointment_id INT,
+    IN p_room_id INT,
+    IN p_nurse_id INT
+)
+BEGIN
+    -- Check if the appointment exists
+    IF NOT EXISTS (SELECT 1 FROM Appointment WHERE appointment_id = p_appointment_id) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Appointment does not exist';
+    ELSE
+        -- Assign room and nurse to the appointment
+        UPDATE Appointment
+        SET room_id = p_room_id, nurse_id = p_nurse_id
+        WHERE appointment_id = p_appointment_id;
+    END IF;
+END //
+DELIMITER ;
