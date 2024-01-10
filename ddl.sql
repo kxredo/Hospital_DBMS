@@ -1,26 +1,25 @@
 CREATE DATABASE Hospital;
 
 CREATE TABLE User (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT PRIMARY KEY UNIQUE AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(50) NOT NULL,
     role VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE Employee (
-    emp_id VARCHAR(50) PRIMARY KEY,
-    user_id INT UNIQUE,
+    employee_id INT UNIQUE PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     address VARCHAR(60) NOT NULL,
     phone VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL,
     salary DOUBLE(10, 2) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES User(user_id)
+    FOREIGN KEY (employee_id) REFERENCES User(user_id)
 );
 
 CREATE TABLE Patient (
-    patient_id CHAR(4) NOT NULL PRIMARY KEY,
+    patient_id INT NOT NULL PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -29,24 +28,25 @@ CREATE TABLE Patient (
     address VARCHAR(60) NOT NULL,
     dob VARCHAR(20) NOT NULL,
     phone VARCHAR(50) NOT NULL,
-    email VARCHAR(100) NOT NULL
+    email VARCHAR(100) NOT NULL,
+    FOREIGN KEY (patient_id) REFERENCES User(user_id)
 );
 
 CREATE TABLE Doctor (
-    doctor_id VARCHAR(50) PRIMARY KEY,
+    doctor_id INT PRIMARY KEY,
     specialty VARCHAR(50) NOT NULL,
-    FOREIGN KEY (doctor_id) REFERENCES Employee(emp_id)
+    FOREIGN KEY (doctor_id) REFERENCES Employee(employee_id)
 );
 
-CREATE TABLE Nurse (
-    nurse_id VARCHAR(50) PRIMARY KEY,
-    FOREIGN KEY (nurse_id) REFERENCES Employee(emp_id)
-);
+-- CREATE TABLE Nurse (
+--     nurse_id INT PRIMARY KEY,
+--     FOREIGN KEY (nurse_id) REFERENCES Employee(employee_id)
+-- );
 
-CREATE TABLE Receptionist (
-    recep_id VARCHAR(50) PRIMARY KEY,
-    FOREIGN KEY (recep_id) REFERENCES Employee(emp_id)
-);
+-- CREATE TABLE Receptionist (
+--     recep_id INT PRIMARY KEY,
+--     FOREIGN KEY (recep_id) REFERENCES Employee(employee_id)
+-- );
 
 
 CREATE TABLE File (
@@ -116,15 +116,17 @@ CREATE TABLE MedicalHistory (
 
 CREATE TABLE Schedules (
     doctor_id INT,
-    appointment_date DATETIME,  -- Assuming the date and time are stored in a DATETIME column
+    appointment_date INT,  -- Assuming the date and time are stored in a DATETIME column
     room_id INT,
     patient_id INT,
     appointment_id INT PRIMARY KEY,  -- Assuming appointment_id is the primary key for the Appointment table
-    FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctor(doctor_id),
     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
     FOREIGN KEY (room_id) REFERENCES Room(roomNo),  -- Corrected the reference to roomNo
     FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
 );
+  
+
 
 
 -- CREATE TABLE AttendedBy {
