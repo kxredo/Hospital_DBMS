@@ -76,7 +76,7 @@ public class View extends JFrame {
     
             if (connection != null) {
                 // Execute a query to retrieve the user role based on the username
-                String query = "SELECT role FROM Employees WHERE username = ?";
+                String query = "SELECT role FROM User WHERE username = ?";
     
                 try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                     preparedStatement.setString(1, username);
@@ -111,6 +111,7 @@ public class View extends JFrame {
             if (verifyLogin(username, password)) {
                 // Retrieve the user role
                 String userRole = getUserRole(username);
+                System.out.println("User role: " + userRole);
     
                 if (userRole != null) {
                     selectedRole = userRole;
@@ -141,7 +142,7 @@ public class View extends JFrame {
     
             if (connection != null) {
                 // Execute a query to check if the username and password match
-                String query = "SELECT * FROM Employees WHERE username = ? AND password = ?";
+                String query = "SELECT * FROM User WHERE username = ? AND password = ?";
     
                 try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                     preparedStatement.setString(1, username);
@@ -1024,7 +1025,6 @@ private void managePatientFunction() {
     }
 }
     
-
     
 
     public static void main(String[] args) {

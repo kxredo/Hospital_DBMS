@@ -1,4 +1,5 @@
---New Stuff
+CREATE DATABASE Hospital;
+
 CREATE TABLE User (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -139,14 +140,14 @@ CREATE TABLE Schedules (
  
 -- };
 
-CREATE TABLE Pays{
+CREATE TABLE Pays (
     receipt_id INT AUTO_INCREMENT, 
     bill_no INT, 
     patient_id INT,
-    PRIMARY KEY (receipt_id) 
+    PRIMARY KEY (receipt_id),
     FOREIGN KEY (bill_no) REFERENCES Bill(bill_no),
     FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
-}
+);
 
 CREATE TABLE Unavailability (
     unavailability_id INT PRIMARY KEY AUTO_INCREMENT,
