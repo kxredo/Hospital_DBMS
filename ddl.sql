@@ -80,7 +80,8 @@ CREATE TABLE Bill(
     bill_no int PRIMARY KEY,
     fees int NOT NULL,
     status int NOT NULL,
-    amount int NOT NULL
+    amount int NOT NULL,
+    date DATE NOT NULL
 );
 
 

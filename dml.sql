@@ -2,11 +2,11 @@ INSERT INTO User (username, password, role) VALUES ('admin', 'admin_password', '
 
 -- Insert Doctor
 INSERT INTO User (username, password, role) VALUES ('doctor1', 'qwerty', 'Doctor');
-INSERT INTO Doctor (username, first_name, last_name, address, phone, email, salary) VALUES ('doctor1', 'Mehmet', 'Öztürk', '456 Çınar Sokak', '9876543210', 'mehmet.ozturk@example.com', 120000.00);
+INSERT INTO Employee (first_name, last_name, address, phone, email, salary) VALUES ('Mehmet', 'Öztürk', '456 Çınar Sokak', '9876543210', 'mehmet.ozturk@example.com', 120000.00);
 
 -- Insert Nurse
 INSERT INTO User (username, password, role) VALUES ('nurse1', 'qwerty', 'Nurse');
-INSERT INTO Nurse (username, first_name, last_name, address, phone, email, salary) VALUES ('nurse1', 'Hemşire', 'Yılmaz', '789 Çam Caddesi', '5559876543', 'hemsire.yilmaz');
+INSERT INTO Nurse (nurse_id, first_name, last_name, address, phone, email, salary) VALUES ('nurse1', 'Hemşire', 'Yılmaz', '789 Çam Caddesi', '5559876543', 'hemsire.yilmaz');
 
 
 

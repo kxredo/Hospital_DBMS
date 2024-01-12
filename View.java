@@ -2,14 +2,22 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+
+
 
 public class View extends JFrame {
     private Map<String, String> userDatabase;  // Simulated user database (username, password)
@@ -23,7 +31,6 @@ public class View extends JFrame {
         super("Hospital Management System");
         userDatabase = new HashMap<>();
         appointmentData = new HashMap<>();
-
         
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -105,7 +112,7 @@ public class View extends JFrame {
         // Check if the user is a patient
         if (userDatabase.containsKey(username) && userDatabase.get(username).equals(password)) {
             selectedRole = "Patient";
-            showUserInterface("Patient");
+            userInterface("Patient");
         } else {
             // If not a patient, try to verify login for doctors/nurses
             if (verifyLogin(username, password)) {
@@ -115,7 +122,7 @@ public class View extends JFrame {
     
                 if (userRole != null) {
                     selectedRole = userRole;
-                    showUserInterface(userRole);
+                    userInterface(userRole);
                 } else {
                     JOptionPane.showMessageDialog(this, "User role not found", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -197,11 +204,11 @@ public class View extends JFrame {
         // Continue with the registration process
         if (username != null && password != null) {
             userDatabase.put(username, password);
-            showRegistrationForm(username);  // Directly show the registration form
+            registrationForm(username);  // Directly show the registration form
         }
     }      
 
-    private void showRegistrationForm(String username) {
+    private void registrationForm(String username) {
         JFrame registrationFrame = new JFrame("User Registration");
         registrationFrame.setSize(400, 400);
         registrationFrame.setLocationRelativeTo(null);
@@ -333,7 +340,8 @@ public class View extends JFrame {
         });
         
     }
-    private void showUserInterface(String userType) {
+    
+    private void userInterface(String userType) {
         if (selectedRole.equals("Patient")) {
             patientInterface(userType);
         }
@@ -353,16 +361,18 @@ public class View extends JFrame {
         patientFrame.setSize(400, 300);
         patientFrame.setLocationRelativeTo(null);
     
-        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(7, 1, 10, 10));
     
-        JButton viewAppointmentsButton = new JButton("View Appointments");
         JButton scheduleAppointmentButton = new JButton("Schedule Appointment");
+        JButton viewAppointmentsButton = new JButton("View Appointments");
         JButton viewBillsButton = new JButton("View Bills");
+        JButton searchDoctorsButton = new JButton("Search Doctors");
         JButton signOutButton = new JButton("Sign Out");
     
-        panel.add(viewAppointmentsButton);
         panel.add(scheduleAppointmentButton);
+        panel.add(viewAppointmentsButton);
         panel.add(viewBillsButton);
+        panel.add(searchDoctorsButton);
         panel.add(signOutButton);
     
         patientFrame.add(panel);
@@ -389,6 +399,14 @@ public class View extends JFrame {
             }
         });
     
+        searchDoctorsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                searchDoctorsFunction();
+            }
+        });
+    
+    
         signOutButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -398,13 +416,130 @@ public class View extends JFrame {
             }
         });
     }
+
+    private void searchDoctorsFunction() {
+    // Create a frame for searching doctors
+    JFrame searchDoctorsFrame = new JFrame("Search Doctors");
+    searchDoctorsFrame.setSize(400, 200);
+    searchDoctorsFrame.setLocationRelativeTo(null);
+
+    // Create a panel for input fields and buttons
+    JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+
+    JLabel expertiseLabel = new JLabel("Field of Expertise:");
+    JTextField expertiseField = new JTextField();
+
+    JButton searchButton = new JButton("Search");
+    JButton cancelButton = new JButton("Cancel");
+
+    panel.add(expertiseLabel);
+    panel.add(expertiseField);
+    panel.add(new JLabel()); // Empty label as a placeholder
+    panel.add(new JLabel()); // Empty label as a placeholder
+    panel.add(searchButton);
+    panel.add(cancelButton);
+
+    searchDoctorsFrame.add(panel);
+    searchDoctorsFrame.setVisible(true);
+
+    searchButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // Retrieve user input
+            String fieldOfExpertise = expertiseField.getText();
+
+            // Validate input
+            if (fieldOfExpertise.isEmpty()) {
+                showError("Field of Expertise is empty.");
+                return;
+            }
+
+            // Perform the search based on the input
+            List<String[]> doctorList = searchDoctors(fieldOfExpertise);
+
+            // Display the search results
+            displayDoctorSearchResults(doctorList);
+
+            // Close the search frame
+            searchDoctorsFrame.dispose();
+        }
+    });
+
+    cancelButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // Close the search frame without performing the search
+            searchDoctorsFrame.dispose();
+        }
+    });
+}
+private void showError(String message) {
+    JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+}
+
+private List<String[]> searchDoctors(String fieldOfExpertise) {
+    List<String[]> doctorList = new ArrayList<>();
+
+    try {
+        // Establish database connection
+        Connection connection = DBConnection.getConnection();
+
+        if (connection != null) {
+            // Execute the search query
+            String query = "SELECT * FROM Doctor WHERE specialty = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, fieldOfExpertise);
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    // Iterate over the result set and add doctor information to the list
+                    while (resultSet.next()) {
+                        String doctorId = resultSet.getString("doctor_id");
+                        String specialty = resultSet.getString("specialty");
+
+                        doctorList.add(new String[]{doctorId, specialty});
+                    }
+                }
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return doctorList;
+}
+
+private void displayDoctorSearchResults(List<String[]> doctorList) {
+    // Create a frame for displaying search results
+    JFrame resultsFrame = new JFrame("Search Results");
+    resultsFrame.setSize(400, 200);
+    resultsFrame.setLocationRelativeTo(null);
+
+    // Create a panel for displaying search results
+    JPanel panel = new JPanel(new GridLayout(doctorList.size() + 1, 2, 10, 10));
+
+    // Add headers for doctor details
+    panel.add(new JLabel("Doctor ID"));
+    panel.add(new JLabel("Specialty"));
+
+    // Iterate over the doctor list and display information
+    for (String[] doctorDetails : doctorList) {
+        for (String detail : doctorDetails) {
+            panel.add(new JLabel(detail));
+        }
+    }
+
+    // Add the panel to the frame
+    resultsFrame.add(new JScrollPane(panel));
+    resultsFrame.setVisible(true);
+}
+    
     
     private void scheduleAppointmentFunction() {
         JFrame appointmentFrame = new JFrame("Schedule Appointment");
         appointmentFrame.setSize(400, 200);
         appointmentFrame.setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(5, 1, 10, 10));
 
         JLabel dateLabel = new JLabel("Date: (dd/mm/yy)");
         JTextField dateField = new JTextField();
@@ -452,108 +587,149 @@ public class View extends JFrame {
     });
 }
 
-    private void viewAppointmentsFunction() {
-        // Create a frame for viewing appointments
-        JFrame appointmentsFrame = new JFrame("View Appointments");
-        appointmentsFrame.setSize(600, 400);
-        appointmentsFrame.setLocationRelativeTo(null);
+private void viewAppointmentsFunction() {
+    // Create a frame for viewing appointments
+    JFrame appointmentsFrame = new JFrame("View Appointments");
+    appointmentsFrame.setSize(600, 400);
+    appointmentsFrame.setLocationRelativeTo(null);
 
-        // Create a panel for displaying appointment information
-        JPanel panel = new JPanel(new GridLayout(appointmentData.size() + 1, 7, 10, 10));
+    // Create a panel for displaying appointment information
+    JPanel panel = new JPanel(new GridLayout(appointmentData.size() + 1, 7, 10, 10));
 
-        // Add headers for appointment details
-        panel.add(new JLabel("Date"));
-        panel.add(new JLabel("Start Time"));
-        panel.add(new JLabel("End Time"));
-        panel.add(new JLabel("Concerns"));
-        panel.add(new JLabel("Symptoms"));
-        panel.add(new JLabel("Status"));
-        panel.add(new JLabel("Actions"));
+    // Add headers for appointment details
+    panel.add(new JLabel("Date"));
+    panel.add(new JLabel("Start Time"));
+    panel.add(new JLabel("End Time"));
+    panel.add(new JLabel("Concerns"));
+    panel.add(new JLabel("Symptoms"));
+    panel.add(new JLabel("Status"));
+    panel.add(new JLabel("Actions"));
 
-        // Iterate over appointment data and display information
-        for (Map.Entry<String, String> entry : appointmentData.entrySet()) {
-            String appointmentInfo = entry.getValue();
-            String[] appointmentDetails = appointmentInfo.split(";");
+    // Add a filter panel with filter options
+    JPanel filterPanel = new JPanel();
+    JLabel filterLabel = new JLabel("Filter Appointments:");
+    JTextField daysFilterField = new JTextField("0"); // Default filter: 0 days (show all)
+    JComboBox specialtyFilterComboBox = new JComboBox<>(new String[]{"Cardiology", "Neurology", "Urology", "Orthopedics", "Dermatology", "Opthalmology", "Gastroenterology", "Obstetrics & Gynecology", "Psychiatry", "Pediatrics", "Endocrinology"}); // Default filter: Cardiology
+    JButton applyFilterButton = new JButton("Apply Filter");
 
-            for (String detail : appointmentDetails) {
-                panel.add(new JLabel(detail));
-            }
+    filterPanel.add(filterLabel);
+    filterPanel.add(new JLabel("Days:"));
+    filterPanel.add(daysFilterField);
+    filterPanel.add(new JLabel("Specialty:"));
+    filterPanel.add(specialtyFilterComboBox);
+    filterPanel.add(applyFilterButton);
 
-            // Add buttons for actions (e.g., "See Diagnosis" and "Cancel/Delete")
-            JButton seeDiagnosisButton = new JButton("See Diagnosis");
-            JButton cancelAppointmentButton = new JButton("Cancel/Delete");
+    // Add ActionListener for Apply Filter button
+    applyFilterButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            applyFilter(Integer.parseInt(daysFilterField.getText()), (String) specialtyFilterComboBox.getSelectedItem());
 
-            panel.add(seeDiagnosisButton);
-            panel.add(cancelAppointmentButton);
+        }
+    });
 
-            // Add ActionListener for See Diagnosis button (you need to implement this)
-            seeDiagnosisButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    // Implement logic for "See Diagnosis" button
-                    JOptionPane.showMessageDialog(appointmentsFrame, "See Diagnosis functionality to be implemented.");
-                }
-            });
+    // Add filter panel to the appointmentsFrame
+    appointmentsFrame.add(filterPanel, BorderLayout.NORTH);
 
-            // Add ActionListener for Cancel/Delete button (you need to implement this)
-            cancelAppointmentButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    // Implement logic for "Cancel/Delete" button
-                    String selectedDate = appointmentDetails[0];
-                    appointmentData.remove(selectedDate);
-                    viewAppointmentsFunction(); // Refresh the view after cancellation
-                }
-            });
+    // Iterate over appointment data and display information
+    for (Map.Entry<String, String> entry : appointmentData.entrySet()) {
+        String appointmentInfo = entry.getValue();
+        String[] appointmentDetails = appointmentInfo.split(";");
+
+        for (String detail : appointmentDetails) {
+            panel.add(new JLabel(detail));
         }
 
-        // Add the panel to the frame
-        appointmentsFrame.add(new JScrollPane(panel));
-        appointmentsFrame.setVisible(true);
+        // Add buttons for actions (e.g., "See Diagnosis" and "Cancel/Delete")
+        JButton seeDiagnosisButton = new JButton("See Diagnosis");
+        JButton cancelAppointmentButton = new JButton("Cancel/Delete");
+
+        panel.add(seeDiagnosisButton);
+        panel.add(cancelAppointmentButton);
+
+        // Add ActionListener for See Diagnosis button (you need to implement this)
+        seeDiagnosisButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Implement logic for "See Diagnosis" button
+                JOptionPane.showMessageDialog(appointmentsFrame, "See Diagnosis functionality to be implemented.");
+            }
+        });
+
+        // Add ActionListener for Cancel/Delete button (you need to implement this)
+        cancelAppointmentButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Implement logic for "Cancel/Delete" button
+                String selectedDate = appointmentDetails[0];
+                appointmentData.remove(selectedDate);
+                viewAppointmentsFunction(); // Refresh the view after cancellation
+            }
+        });
     }
 
-    private void viewBillsFunction() {
-        // Create a frame for viewing bills
-        JFrame billsFrame = new JFrame("View Bills");
-        billsFrame.setSize(600, 400);
-        billsFrame.setLocationRelativeTo(null);
-    
-        // Create a panel for displaying bill information
-        JPanel panel = new JPanel(new GridLayout(billData.size() + 1, 5, 10, 10));
-    
-        // Add headers for bill details
-        panel.add(new JLabel("Date"));
-        panel.add(new JLabel("Description"));
-        panel.add(new JLabel("Amount"));
-        panel.add(new JLabel("Status"));
-        panel.add(new JLabel("Bill Number"));
-    
-        // Iterate over bill data and display information
-        for (Map.Entry<String, String> entry : billData.entrySet()) {
-            String billInfo = entry.getValue();
-            String[] billDetails = billInfo.split(";");
-    
-            for (String detail : billDetails) {
-                panel.add(new JLabel(detail));
+    // Add the panel to the frame
+    appointmentsFrame.add(new JScrollPane(panel), BorderLayout.CENTER);
+    appointmentsFrame.setVisible(true);
+}
+
+private void applyFilter(int days, String specialty) {
+    // Implement filtering logic based on days and specialty
+    // For example, you can filter the displayed appointments accordingly
+    // Update the appointmentData map based on the filter criteria
+    // Then, call viewAppointmentsFunction() to refresh the view with the filtered appointments
+    // You need to implement this part based on your specific requirements
+    System.out.println("Filter Applied - Days: " + days + ", Specialty: " + specialty);
+}
+
+private void viewBillsFunction() {
+    // Create a frame for viewing bills
+    JFrame billsFrame = new JFrame("View Bills");
+    billsFrame.setSize(600, 400);
+    billsFrame.setLocationRelativeTo(null);
+
+    // Create a panel for displaying bill information
+    JPanel panel = new JPanel(new GridLayout(billData.size() + 1, 4, 10, 10));
+
+    // Add headers for bill details
+    panel.add(new JLabel("Date"));
+    panel.add(new JLabel("Fees"));
+    panel.add(new JLabel("Status"));
+    panel.add(new JLabel("Bill Number"));
+
+    try (Connection connection = DBConnection.getConnection();
+         Statement statement = connection.createStatement()) {
+        // Fetch bill data from the database
+        String query = "SELECT * FROM Bill";
+        try (ResultSet resultSet = statement.executeQuery(query)) {
+            while (resultSet.next()) {
+                // Extract data from the result set
+                int billNumber = resultSet.getInt("bill_no");
+                int fees = resultSet.getInt("fees");
+                boolean status = resultSet.getBoolean("status");
+                Date date = resultSet.getDate("date");
+
+                // Display bill details in the panel
+                panel.add(new JLabel(date.toString()));
+                panel.add(new JLabel(Integer.toString(fees)));
+                panel.add(new JLabel(getBillStatus(status)));
+                panel.add(new JLabel(Integer.toString(billNumber)));
             }
-    
-            // Add status and bill number
-            panel.add(new JLabel(getBillStatus(entry.getKey()))); // Assuming entry.getKey() returns the bill ID
-            panel.add(new JLabel(entry.getKey())); // Assuming entry.getKey() returns the bill ID
         }
-    
-        // Add the panel to the frame
-        billsFrame.add(new JScrollPane(panel));
-        billsFrame.setVisible(true);
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
-    
-    // Example method to get bill status based on bill ID
-    private String getBillStatus(String billID) {
-        // Implement your logic to get the status based on the bill ID
-        // You might fetch this information from the database or any other source
-        // For demonstration purposes, I'm assuming a simple logic here
-        return "Paid"; // Replace with your logic
-    }
+
+    // Add the panel to the frame
+    billsFrame.add(new JScrollPane(panel));
+    billsFrame.setVisible(true);
+}
+
+// Example method to get bill status based on boolean status
+private String getBillStatus(boolean isPaid) {
+    return isPaid ? "Paid" : "Unpaid";
+}
+
     
 
     private void doctorInterface(String username) {
@@ -575,13 +751,6 @@ public class View extends JFrame {
 
         doctorFrame.add(panel);
         doctorFrame.setVisible(true);
-
-        viewPatientsButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                viewPatientsFunction();
-            }
-        });
 
         viewAppointmentsButton.addActionListener(new ActionListener() {
             @Override
@@ -606,42 +775,7 @@ public class View extends JFrame {
         });
     }
     
-    private void viewPatientsFunction() {
-        // Create a frame for viewing patients
-        JFrame patientsFrame = new JFrame("View Patients");
-        patientsFrame.setSize(600, 400);
-        patientsFrame.setLocationRelativeTo(null);
     
-        // Assuming you have a map to store patient data similar to appointmentData and billData
-        Map<String, String> patientData = new HashMap<>();
-        // Populate patient data (replace this with your actual patient data)
-        patientData.put("Patient1", "John Doe;25;Male;123 Main St;555-1234");
-        patientData.put("Patient2", "Jane Doe;30;Female;456 Oak St;555-5678");
-    
-        // Create a panel for displaying patient information
-        JPanel panel = new JPanel(new GridLayout(patientData.size() + 1, 5, 10, 10));
-    
-        // Add headers for patient details
-        panel.add(new JLabel("Name"));
-        panel.add(new JLabel("Age"));
-        panel.add(new JLabel("Gender"));
-        panel.add(new JLabel("Address"));
-        panel.add(new JLabel("Phone Number"));
-    
-        // Iterate over patient data and display information
-        for (Map.Entry<String, String> entry : patientData.entrySet()) {
-            String patientInfo = entry.getValue();
-            String[] patientDetails = patientInfo.split(";");
-    
-            for (String detail : patientDetails) {
-                panel.add(new JLabel(detail));
-            }
-        }
-    
-        // Add the panel to the frame
-        patientsFrame.add(new JScrollPane(panel));
-        patientsFrame.setVisible(true);
-    }
 
     private void scheduleAppointmentFunctionForDoctor() {
         JFrame appointmentFrame = new JFrame("Schedule Appointment");
@@ -1026,7 +1160,6 @@ private void managePatientFunction() {
 }
     
     
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
