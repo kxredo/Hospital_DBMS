@@ -323,6 +323,10 @@ public class View extends JFrame {
                     showError("Email is empty.");
                     return;
                 }
+                if (!email.contains("@")) {
+                    showError("Email is invalid.");
+                    return;
+                }
         
                 if (address.isEmpty()) {
                     showError("Address is empty.");
@@ -485,18 +489,23 @@ private List<String[]> searchDoctors(String fieldOfExpertise) {
         Connection connection = DBConnection.getConnection();
 
         if (connection != null) {
-            // Execute the search query
-            String query = "SELECT * FROM Doctor WHERE specialty = ?";
+            // Execute the search query with a JOIN operation
+            String query = "SELECT Doctor.doctor_id, Doctor.specialty, Employee.name " +
+                           "FROM Doctor " +
+                           "JOIN Employee ON Doctor.doctor_id = Employee.emp_id " +
+                           "WHERE Doctor.specialty = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, fieldOfExpertise);
-
+    
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     // Iterate over the result set and add doctor information to the list
                     while (resultSet.next()) {
                         String doctorId = resultSet.getString("doctor_id");
+                        String name = resultSet.getString("name");
                         String specialty = resultSet.getString("specialty");
-
-                        doctorList.add(new String[]{doctorId, specialty});
+                        
+    
+                        doctorList.add(new String[]{doctorId, name, specialty});
                     }
                 }
             }
@@ -515,11 +524,13 @@ private void displayDoctorSearchResults(List<String[]> doctorList) {
     resultsFrame.setLocationRelativeTo(null);
 
     // Create a panel for displaying search results
-    JPanel panel = new JPanel(new GridLayout(doctorList.size() + 1, 2, 10, 10));
+    JPanel panel = new JPanel(new GridLayout(doctorList.size() + 1, 3, 10, 10));
 
     // Add headers for doctor details
     panel.add(new JLabel("Doctor ID"));
+    panel.add(new JLabel("Name"));
     panel.add(new JLabel("Specialty"));
+    
 
     // Iterate over the doctor list and display information
     for (String[] doctorDetails : doctorList) {
@@ -663,6 +674,7 @@ private void viewAppointmentsFunction() {
                 // Implement logic for "Cancel/Delete" button
                 String selectedDate = appointmentDetails[0];
                 appointmentData.remove(selectedDate);
+                appointmentsFrame.dispose();
                 viewAppointmentsFunction(); // Refresh the view after cancellation
             }
         });
@@ -689,31 +701,36 @@ private void viewBillsFunction() {
     billsFrame.setLocationRelativeTo(null);
 
     // Create a panel for displaying bill information
-    JPanel panel = new JPanel(new GridLayout(billData.size() + 1, 4, 10, 10));
+    JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
 
-    // Add headers for bill details
-    panel.add(new JLabel("Date"));
-    panel.add(new JLabel("Fees"));
-    panel.add(new JLabel("Status"));
-    panel.add(new JLabel("Bill Number"));
+    JLabel dateLabel = new JLabel("Date:");
+    JLabel feesLabel = new JLabel("Fees:");
+    JLabel statusLabel = new JLabel("Status:");
+    JLabel billNumLabel = new JLabel("Bill number:");
 
-    try (Connection connection = DBConnection.getConnection();
-         Statement statement = connection.createStatement()) {
-        // Fetch bill data from the database
-        String query = "SELECT * FROM Bill";
-        try (ResultSet resultSet = statement.executeQuery(query)) {
-            while (resultSet.next()) {
-                // Extract data from the result set
-                int billNumber = resultSet.getInt("bill_no");
-                int fees = resultSet.getInt("fees");
-                boolean status = resultSet.getBoolean("status");
-                Date date = resultSet.getDate("date");
+    panel.add(dateLabel);
+    panel.add(feesLabel);
+    panel.add(statusLabel);
+    panel.add(billNumLabel);
 
-                // Display bill details in the panel
-                panel.add(new JLabel(date.toString()));
-                panel.add(new JLabel(Integer.toString(fees)));
-                panel.add(new JLabel(getBillStatus(status)));
-                panel.add(new JLabel(Integer.toString(billNumber)));
+    try (Connection connection = DBConnection.getConnection()) {
+        if (connection != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM Bill");
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                while (resultSet.next()) {
+                    // Extract data from the result set
+                    int billNumber = resultSet.getInt("bill_no");
+                    int fees = resultSet.getInt("fees");
+                    boolean status = resultSet.getBoolean("status");
+                    Date date = resultSet.getDate("date");
+
+                    // Display bill details in the panel
+                    panel.add(new JLabel(date.toString()));
+                    panel.add(new JLabel(Integer.toString(fees)));
+                    panel.add(new JLabel(getBillStatus(status)));
+                    panel.add(new JLabel(Integer.toString(billNumber)));
+                }
             }
         }
     } catch (SQLException e) {
@@ -725,12 +742,11 @@ private void viewBillsFunction() {
     billsFrame.setVisible(true);
 }
 
-// Example method to get bill status based on boolean status
-private String getBillStatus(boolean isPaid) {
-    return isPaid ? "Paid" : "Unpaid";
+// Example method to get bill status based on status flag
+private String getBillStatus(boolean status) {
+    return status ? "Paid" : "Unpaid";
 }
 
-    
 
     private void doctorInterface(String username) {
         JFrame doctorFrame = new JFrame("Doctor Interface");
@@ -739,18 +755,24 @@ private String getBillStatus(boolean isPaid) {
 
         JPanel panel = new JPanel(new GridLayout(3, 1, 10, 10));
 
-        JButton viewPatientsButton = new JButton("View Patients");
+        JButton roomsAvailabilityButton = new JButton("Rooms availability");
         JButton viewAppointmentsButton = new JButton("View Appointments");
         JButton scheduleAppointmentButton = new JButton("Schedule Appointment");
         JButton signOutButton = new JButton("Sign Out");
 
-        panel.add(viewPatientsButton);
+        panel.add(roomsAvailabilityButton);
         panel.add(viewAppointmentsButton);
         panel.add(scheduleAppointmentButton);
         panel.add(signOutButton);
 
         doctorFrame.add(panel);
         doctorFrame.setVisible(true);
+
+        roomsAvailabilityButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                roomsAvailabilityFunction();            }
+        });
 
         viewAppointmentsButton.addActionListener(new ActionListener() {
             @Override
@@ -775,6 +797,50 @@ private String getBillStatus(boolean isPaid) {
         });
     }
     
+    private void roomsAvailabilityFunction() {
+        // Create a frame for displaying room availability
+        JFrame roomsFrame = new JFrame("Rooms Availability");
+        roomsFrame.setSize(600, 400);
+        roomsFrame.setLocationRelativeTo(null);
+    
+        // Create a panel for displaying room availability information
+        JPanel panel = new JPanel(new GridLayout(3, 1, 10, 10));
+    
+        JLabel roomNoLabel = new JLabel("Room Number");
+        JLabel roomTypeLabel = new JLabel("Room Type");
+        JLabel availabilityLabel = new JLabel("Availability");
+    
+        panel.add(roomNoLabel);
+        panel.add(roomTypeLabel);
+        panel.add(availabilityLabel);
+    
+        try (Connection connection = DBConnection.getConnection()) {
+            if (connection != null) {
+                try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM Room");
+                     ResultSet resultSet = preparedStatement.executeQuery()) {
+    
+                    while (resultSet.next()) {
+                        // Extract data from the result set
+                        int roomNo = resultSet.getInt("roomNo");
+                        String roomType = resultSet.getString("roomType");
+                        boolean availability = resultSet.getBoolean("availability");
+    
+                        // Display room availability details in the panel
+                        panel.add(new JLabel(Integer.toString(roomNo)));
+                        panel.add(new JLabel(roomType));
+                        panel.add(new JLabel(availability ? "Available" : "Occupied"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    
+        // Add the panel to the frame
+        roomsFrame.add(new JScrollPane(panel));
+        roomsFrame.setVisible(true);
+    }
+    
     
 
     private void scheduleAppointmentFunctionForDoctor() {
@@ -783,6 +849,9 @@ private String getBillStatus(boolean isPaid) {
         appointmentFrame.setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+
+        JLabel roomLabel = new JLabel("Select Room:");
+        JComboBox<String> roomComboBox = new JComboBox<>(getAvailableRooms());
 
         JLabel dateLabel = new JLabel("Date: (dd/mm/yy)");
         JTextField dateField = new JTextField();
@@ -801,6 +870,8 @@ private String getBillStatus(boolean isPaid) {
 
         JButton submitButton = new JButton("Submit");
 
+        panel.add(roomLabel);
+        panel.add(roomComboBox);
         panel.add(dateLabel);
         panel.add(dateField);
         panel.add(startTimeLabel);
@@ -821,6 +892,7 @@ private String getBillStatus(boolean isPaid) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Retrieve user inputs
+                String selectedRoom = (String) roomComboBox.getSelectedItem();
                 String date = dateField.getText();
                 String startTime = startTimeField.getText();
                 String endTime = endTimeField.getText();
@@ -833,6 +905,67 @@ private String getBillStatus(boolean isPaid) {
             }
         });
     }
+    private int getRoomNoByName(String roomName) {
+        // Implement this method to retrieve and return the room number based on the room name
+        // You can fetch this information from the Room table in the database
+        // Example: return 101;
+        return 1;
+    }
+
+    private void assignRoomToAppointment(String date, String startTime, String endTime, String patient, String symptoms, String room) {
+        try (Connection connection = DBConnection.getConnection()) {
+            if (connection != null) {
+                // Retrieve room number based on the selected room
+                int roomNo = getRoomNoByName(room);
+    
+                // Execute the query to insert appointment details with assigned room
+                String query = "INSERT INTO Appointment (start_time, end_time, fee, roomNo) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, date + " " + startTime);
+                    preparedStatement.setString(2, date + " " + endTime);
+                    preparedStatement.setDouble(3, 50.00); // Replace with the actual fee
+                    preparedStatement.setInt(4, roomNo);
+    
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private String[] getAvailableRooms() {
+        List<String> availableRooms = new ArrayList<>();
+    
+        try (Connection connection = DBConnection.getConnection()) {
+            if (connection != null) {
+                // Execute the query to select available rooms
+                String query = "SELECT * FROM Room WHERE availability = true";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+                     ResultSet resultSet = preparedStatement.executeQuery()) {
+    
+                    while (resultSet.next()) {
+                        // Extract data from the result set
+                        String roomType = resultSet.getString("roomType");
+                        availableRooms.add(roomType);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    
+        // Convert the list to an array
+        return availableRooms.toArray(new String[0]);
+    }
+    
+
+    private String getRoomForAppointment(String appointmentDate) {
+        // Implement this method to retrieve and return the assigned room for a specific appointment date
+        // You can fetch this information from the database based on the provided date
+        // Example: return "X-Ray room";
+        return "Room 101";
+    }
 
     private void viewAppointmentsFunctionForDoctor() {
         // Create a frame for viewing appointments
@@ -844,6 +977,7 @@ private String getBillStatus(boolean isPaid) {
         JPanel panel = new JPanel(new GridLayout(appointmentData.size() + 1, 7, 10, 10));
 
         // Add headers for appointment details
+        panel.add(new JLabel("Room"));
         panel.add(new JLabel("Date"));
         panel.add(new JLabel("Start Time"));
         panel.add(new JLabel("End Time"));
@@ -865,6 +999,7 @@ private String getBillStatus(boolean isPaid) {
             JButton seeDiagnosisButton = new JButton("See Diagnosis");
             JButton cancelAppointmentButton = new JButton("Cancel/Delete");
 
+            panel.add(new JLabel(getRoomForAppointment(appointmentDetails[0]))); // Assuming appointmentDetails[0] is the appointment date
             panel.add(seeDiagnosisButton);
             panel.add(cancelAppointmentButton);
 
@@ -888,6 +1023,7 @@ private String getBillStatus(boolean isPaid) {
                 }
             });
         }
+        
 
         // Add the panel to the frame
         appointmentsFrame.add(new JScrollPane(panel));

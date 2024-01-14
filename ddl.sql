@@ -87,11 +87,15 @@ CREATE TABLE Bill(
 
 
 CREATE TABLE Appointment (
+    app_id int PRIMARY KEY,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
-    fee double NOT NULL
-    
+    fee DECIMAL(5,2) NOT NULL,
+    roomNo int,  -- New field to store the assigned room number
+    FOREIGN KEY (roomNo) REFERENCES Room(roomNo),
+    FOREIGN KEY (emp_id) REFERENCES Doctor(emp_id)
 );
+
 
 CREATE TABLE Room (
     roomNo int PRIMARY KEY,
