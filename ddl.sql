@@ -53,35 +53,22 @@ CREATE TABLE File (
         fileNo int NOT NULL
 );
 
-/*CREATE TABLE EmergencyContactPerson (
-    EmergencyContactPerson_ID INT PRIMARY KEY,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
-    phone VARCHAR(20),
-    email VARCHAR(100)
+CREATE TABLE Diagnosis (
+    diagnosis_id INT PRIMARY KEY AUTO_INCREMENT,
+    doctor_id INT,
+    appointment_id INT,
+    diagnosis_text TEXT,
+    FOREIGN KEY (doctor_id) REFERENCES Doctor(doctor_id),
+    FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id)
 );
-*/
 
-/*
-CREATE TABLE HealthInsurance(
-        HealthInsurance_ID int PRIMARY KEY,
-    company varchar(70),
-    address1 varchar(70),
-    address2 varchar(70),
-    city varchar(70),
-    zipcode varchar(70),
-    country varchar(70),
-    phone varchar(70),
-    email varchar(70)
-);
-*/
 
-CREATE TABLE Bill(
-    bill_no int PRIMARY KEY,
-    fees int NOT NULL,
-    status int NOT NULL,
-    amount int NOT NULL,
-    date DATE NOT NULL
+CREATE TABLE Bill (
+    billNo INT PRIMARY KEY,
+    patientId INT,
+    status VARCHAR(20),
+    fees DECIMAL(10, 2),
+    FOREIGN KEY (patientId) REFERENCES Patient(patientId)
 );
 
 
@@ -111,13 +98,6 @@ CREATE TABLE MedicalHistory (
     medication VARCHAR(100) NOT NULL
 );
 
---
--- CREATE TABLE LocatedIn (
---     appointment_id INT,
---     roomNo INT,
---     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
---     FOREIGN KEY (roomNo) REFERENCES Room(roomNo)
--- );
 
 CREATE TABLE Schedules (
     doctor_id INT,
@@ -130,22 +110,7 @@ CREATE TABLE Schedules (
     FOREIGN KEY (room_id) REFERENCES Room(roomNo),  -- Corrected the reference to roomNo
     FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
 );
-  
 
-
-
--- CREATE TABLE AttendedBy {
---     nurse_id INT,
---     doctor_id INT,
---     patient_id INT,
---     appointment_id INT,
-
---     FOREIGN KEY (nurse_id) REFERENCES Nurse(emp_id),
---     FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
---     FOREIGN KEY (patient_id) REFERENCES Patient(patient_id),
---     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id)
- 
--- };
 
 CREATE TABLE Pays (
     receipt_id INT AUTO_INCREMENT, 
@@ -164,3 +129,54 @@ CREATE TABLE Unavailability (
     end_time TIME,
     FOREIGN KEY (doctor_id) REFERENCES Doctor(doctor_id)
 );
+
+
+CREATE TABLE SpecialtyPrices (
+    specialty VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL
+);
+
+
+/*CREATE TABLE EmergencyContactPerson (
+    EmergencyContactPerson_ID INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    phone VARCHAR(20),
+    email VARCHAR(100)
+);
+*/
+
+/*
+CREATE TABLE HealthInsurance(
+        HealthInsurance_ID int PRIMARY KEY,
+    company varchar(70),
+    address1 varchar(70),
+    address2 varchar(70),
+    city varchar(70),
+    zipcode varchar(70),
+    country varchar(70),
+    phone varchar(70),
+    email varchar(70)
+);
+*/
+
+-- CREATE TABLE AttendedBy {
+--     nurse_id INT,
+--     doctor_id INT,
+--     patient_id INT,
+--     appointment_id INT,
+
+--     FOREIGN KEY (nurse_id) REFERENCES Nurse(emp_id),
+--     FOREIGN KEY (doctor_id) REFERENCES Doctor(emp_id),
+--     FOREIGN KEY (patient_id) REFERENCES Patient(patient_id),
+--     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id)
+ 
+-- };
+
+--
+-- CREATE TABLE LocatedIn (
+--     appointment_id INT,
+--     roomNo INT,
+--     FOREIGN KEY (appointment_id) REFERENCES Appointment(appointment_id),
+--     FOREIGN KEY (roomNo) REFERENCES Room(roomNo)
+-- );

@@ -1,4 +1,4 @@
-package Entities;
+
 public class Bill {
     public final String status;
     public final double fees;

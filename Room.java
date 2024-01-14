@@ -1,4 +1,4 @@
-package Entities;
+
 public class Room {
     public final int roomNo;
     public final String roomType;

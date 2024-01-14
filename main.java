@@ -10,209 +10,181 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale.Category;
 
-import Entities.Room;
 
 
 
 public class main{
-    public int addAdmin(String username, String password) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet generatedKeys = null;
 
+    private String validateRole(String role) {
+    switch (role.toLowerCase()) {
+        case "doctor":
+        case "nurse":
+        case "receptionist":
+        case "admin":
+        case "patient":
+            // If it is, return the original role in lowercase
+            return role.toLowerCase();
+        default:
+            // If not, throw an IllegalArgumentException with an error message
+            throw new IllegalArgumentException("Invalid Role: " + role);
+    }
+}
+
+public User addUser(String username, String password, String role) {
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+    ResultSet generatedKeys = null;
+
+    try {
+        connection = DBConnection.getConnection();
+        String insertQuery = "INSERT INTO admin(username, password, role) VALUES (?, ?, ?)";
+
+        preparedStatement = connection.prepareStatement(insertQuery);
+        preparedStatement.setString(1, username);
+        preparedStatement.setString(2, password);
+        String validatedRole = validateRole(role);
+        preparedStatement.setString(3, validatedRole);
+
+        int rowsInserted = preparedStatement.executeUpdate();
+        if (rowsInserted > 0) {
+            System.out.println("A new user was inserted.");
+            return new User(username, password, validatedRole); // Use the validatedRole
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
         try {
-            connection = DBConnection.getConnection();
-            String insertQuery = "INSERT INTO admin(username, password) VALUES (?, ?)";
-
-            preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, username);
-            preparedStatement.setString(2, password);
-
-            int rowsInserted = preparedStatement.executeUpdate();
-            if (rowsInserted > 0) {
-                System.out.println("A new admin was inserted.");
-
-                generatedKeys = preparedStatement.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int adminId = generatedKeys.getInt(1);
-                    System.out.println("Generated admin ID: " + adminId);
-                    return adminId;
-                }
+            if (generatedKeys != null) {
+                generatedKeys.close();
+            }
+            if (preparedStatement != null) {
+                preparedStatement.close();
+            }
+            if (connection != null) {
+                connection.close();
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (generatedKeys != null) {
-                    generatedKeys.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
-
-        return -1; // Indicates failure to add an admin
     }
 
-    public int addDoctor(String firstName, String lastName, String username, String password, String email, String address, int salary, int phone, String specialty) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet generatedKeys = null;
+    return null; // Indicates failure to add an admin
+}
 
-        try {
-            connection = DBConnection.getConnection();
-            String insertQuery = "INSERT INTO doctor(first_name, last_name, username, password, email, address, salary, phone, specialty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // public int addAdmin(String username, String password) {
+    //     Connection connection = null;
+    //     PreparedStatement preparedStatement = null;
+    //     ResultSet generatedKeys = null;
 
-            preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, firstName);
-            preparedStatement.setString(2, lastName);
-            preparedStatement.setString(3, username);
-            preparedStatement.setString(4, password);
-            preparedStatement.setString(5, email);
-            preparedStatement.setString(6, address);
-            preparedStatement.setInt(7, salary);
-            preparedStatement.setInt(8, phone);
+    //     try {
+    //         connection = DBConnection.getConnection();
+    //         String insertQuery = "INSERT INTO admin(username, password) VALUES (?, ?)";
+
+    //         preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+    //         preparedStatement.setString(1, username);
+    //         preparedStatement.setString(2, password);
+
+    //         int rowsInserted = preparedStatement.executeUpdate();
+    //         if (rowsInserted > 0) {
+    //             System.out.println("A new admin was inserted.");
+
+    //             generatedKeys = preparedStatement.getGeneratedKeys();
+    //             if (generatedKeys.next()) {
+    //                 int adminId = generatedKeys.getInt(1);
+    //                 System.out.println("Generated admin ID: " + adminId);
+    //                 return adminId;
+    //             }
+    //         }
+    //     } catch (SQLException e) {
+    //         e.printStackTrace();
+    //     } finally {
+    //         try {
+    //             if (generatedKeys != null) {
+    //                 generatedKeys.close();
+    //             }
+    //             if (preparedStatement != null) {
+    //                 preparedStatement.close();
+    //             }
+    //             if (connection != null) {
+    //                 connection.close();
+    //             }
+    //         } catch (SQLException e) {
+    //             e.printStackTrace();
+    //         }
+    //     }
+
+    //     return -1; // Indicates failure to add an admin
+    // }
+public int addEmployee(String table, String firstName, String lastName, String username, String password, String email, String address, int salary, int phone, String specialty) {
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+    ResultSet generatedKeys = null;
+
+    try {
+        connection = DBConnection.getConnection();
+        String insertQuery = "INSERT INTO " + table + "(first_name, last_name, username, password, email, address, salary, phone";
+        
+        // If the employee has a specialty (e.g., doctor), add it to the query
+        if (specialty != null && !specialty.isEmpty()) {
+            insertQuery += ", specialty";
+        }
+
+        insertQuery += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?";
+
+        // If the employee has a specialty (e.g., doctor), set its value in the prepared statement
+        if (specialty != null && !specialty.isEmpty()) {
+            insertQuery += ", ?";
+        }
+
+        insertQuery += ")";
+
+        preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+        preparedStatement.setString(1, firstName);
+        preparedStatement.setString(2, lastName);
+        preparedStatement.setString(3, username);
+        preparedStatement.setString(4, password);
+        preparedStatement.setString(5, email);
+        preparedStatement.setString(6, address);
+        preparedStatement.setInt(7, salary);
+        preparedStatement.setInt(8, phone);
+
+        // If the employee has a specialty (e.g., doctor), set its value in the prepared statement
+        if (specialty != null && !specialty.isEmpty()) {
             preparedStatement.setString(9, specialty);
-
-            int rowsInserted = preparedStatement.executeUpdate();
-            if (rowsInserted > 0) {
-                System.out.println("A new doctor was inserted.");
-
-                generatedKeys = preparedStatement.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int doctorId = generatedKeys.getInt(1);
-                    System.out.println("Generated doctor ID: " + doctorId);
-                    return doctorId;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (generatedKeys != null) {
-                    generatedKeys.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
 
-        return -1; // Indicates failure to add a doctor
-    }
+        int rowsInserted = preparedStatement.executeUpdate();
+        if (rowsInserted > 0) {
+            System.out.println("A new " + table + " was inserted.");
 
-    public int addNurse(String firstName, String lastName, String username, String password, String email, String address, int salary, int phone) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet generatedKeys = null;
-
+            generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                int employeeId = generatedKeys.getInt(1);
+                System.out.println("Generated " + table + " ID: " + employeeId);
+                return employeeId;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
         try {
-            connection = DBConnection.getConnection();
-            String insertQuery = "INSERT INTO nurse(first_name, last_name, username, password, email, address, salary, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-            preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, firstName);
-            preparedStatement.setString(2, lastName);
-            preparedStatement.setString(3, username);
-            preparedStatement.setString(4, password);
-            preparedStatement.setString(5, email);
-            preparedStatement.setString(6, address);
-            preparedStatement.setInt(7, salary);
-            preparedStatement.setInt(8, phone);
-
-            int rowsInserted = preparedStatement.executeUpdate();
-            if (rowsInserted > 0) {
-                System.out.println("A new nurse was inserted.");
-
-                generatedKeys = preparedStatement.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int nurseId = generatedKeys.getInt(1);
-                    System.out.println("Generated nurse ID: " + nurseId);
-                    return nurseId;
-                }
+            if (generatedKeys != null) {
+                generatedKeys.close();
+            }
+            if (preparedStatement != null) {
+                preparedStatement.close();
+            }
+            if (connection != null) {
+                connection.close();
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (generatedKeys != null) {
-                    generatedKeys.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
-
-        return -1; // Indicates failure to add a nurse
     }
 
-    public int addReceptionist(String firstName, String lastName, String username, String password, String email, String address, int salary, int phone) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet generatedKeys = null;
+    return -1; // Indicates failure to add an employee
+}
 
-        try {
-            connection = DBConnection.getConnection();
-            String insertQuery = "INSERT INTO receptionist(first_name, last_name, username, password, email, address, salary, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-            preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, firstName);
-            preparedStatement.setString(2, lastName);
-            preparedStatement.setString(3, username);
-            preparedStatement.setString(4, password);
-            preparedStatement.setString(5, email);
-            preparedStatement.setString(6, address);
-            preparedStatement.setInt(7, salary);
-            preparedStatement.setInt(8, phone);
-
-            int rowsInserted = preparedStatement.executeUpdate();
-            if (rowsInserted > 0) {
-                System.out.println("A new receptionist was inserted.");
-
-                generatedKeys = preparedStatement.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    int receptionistId = generatedKeys.getInt(1);
-                    System.out.println("Generated receptionist ID: " + receptionistId);
-                    return receptionistId;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (generatedKeys != null) {
-                    generatedKeys.close();
-                }
-                if (preparedStatement != null) {
-                    preparedStatement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return -1; // Indicates failure to add a receptionist
-    }
     
     public List<Room> getAvailableRooms() {
         List<Room> availableRooms = new ArrayList<>();
