@@ -1,16 +1,16 @@
 INSERT INTO User (username, password, role) VALUES ('admin', 'admin_password', 'admin');
 
 -- Insert Doctor
-INSERT INTO User (username, password, role) VALUES ('doctor1', 'qwerty', 'Doctor');
-INSERT INTO Employee (first_name, last_name, address, phone, email, salary) VALUES ('Mehmet', 'Öztürk', '456 Çınar Sokak', '9876543210', 'mehmet.ozturk@example.com', 120000.00);
+INSERT INTO User (username, password, role) VALUES ('Ozturk', 'qwerty', 'Doctor');
+INSERT INTO Employee (first_name, last_name, address, phone, email, salary) VALUES ('Mehmet', 'Ozturk', '456 Çınar Sokak', '9876543210', 'mehmet.ozturk@example.com', 120000.00);
 
 -- Insert Nurse
-INSERT INTO User (username, password, role) VALUES ('nurse1', 'qwerty', 'Nurse');
-INSERT INTO Nurse (nurse_id, first_name, last_name, address, phone, email, salary) VALUES ('nurse1', 'Hemşire', 'Yılmaz', '789 Çam Caddesi', '5559876543', 'hemsire.yilmaz');
+INSERT INTO User (username, password, role) VALUES ('Yilmaz', 'qwerty', 'Nurse');
+INSERT INTO Nurse (nurse_id, first_name, last_name, address, phone, email, salary) VALUES ('Yilmaz', 'Hemsire', 'Yilmaz', '789 Çam Caddesi', '5559876543', 'hemsire.yilmaz');
 
 
 
-
+--only admins can add employees 
 DELIMITER //
 
 CREATE PROCEDURE add_employee(
@@ -40,17 +40,33 @@ DELIMITER ;
 
 
 
-CALL add_employee('admin', 'admin_password', 'admin', 'John', 'Doe', 50000, 123456789);
+--CALL add_employee('admin', 'admin_password', 'admin', 'John', 'Doe', 50000, 123456789);
 
 -- Insert Admin
-INSERT INTO Admin (username) VALUES ('yonetici_kullanici');
+--INSERT INTO Admin (username) VALUES ('yonetici_kullanici');
 
 
 -- Insert Rooms
-INSERT INTO Room (roomNo, roomType, availability) VALUES (101, 'Standart', true);
+INSERT INTO Room (roomNo, roomType, availability) VALUES
+(101, 'X_ray', true),
+(102, 'X_ray', true),
+(103, 'X_ray', true),
+(104, 'X_ray', true),
+(105, 'Ultrasound', true),
+(106, 'Ultrasound', true),
+(107, 'MRI', false),
+(108, 'MRI', true);
+
+
+
 
 -- Insert Bills
-INSERT INTO Bill (bill_no, fees, status, amount) VALUES (1, 100, 1, 1000);
+
+INSERT INTO Bill (billNo, patientId, status, fees) VALUES (1, 101, 'unpaid', 100.00);
+
+INSERT INTO Bill (billNo, patientId, status, fees) VALUES (2, 102, 'paid', 150.00);
+
+
 
 -- Insert Appointments
 INSERT INTO Appointment (start_time, end_time, fee) VALUES ('2023-01-01 10:00:00', '2023-01-01 11:00:00', 50.00);
@@ -177,3 +193,17 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
+
+
+INSERT INTO SpecialtyPrices (specialty, price) VALUES
+('Cardiology', 150.00),
+('Neurology', 120.00),
+('Urology', 130.00),
+('Orthopedics', 110.00),
+('Dermatology', 90.00),
+('Ophthalmology', 100.00),
+('Gastroenterology', 140.00),
+('Obstetrics & Gynecology', 180.00),
+('Psychiatry', 160.00),
+('Pediatrics', 100.00),
+('Endocrinology', 130.00);
