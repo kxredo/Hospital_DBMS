@@ -1,4 +1,4 @@
-#ER Diagram:
+# ER Diagram:
 
 <img width="888" alt="Screenshot 2024-08-12 at 4 56 08 PM" src="https://github.com/user-attachments/assets/ce2f43c1-61ac-4423-83dd-566c8f456d5f">
 
